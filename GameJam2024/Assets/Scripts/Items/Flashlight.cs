@@ -8,7 +8,8 @@ public class Flashlight : MonoBehaviour
     public float rechargeAmount = 5f; // Recharge amount
     public Light flashlightLight;
 
-    private bool isOn = false; 
+    private bool isOn = false;
+    private bool isEquipped = false;
     private float batteryDrainRate; 
 
     void Start()
@@ -20,11 +21,11 @@ public class Flashlight : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && batteryLife > 0f)
+        if (isEquipped && Input.GetKeyDown(KeyCode.Q) && batteryLife > 0f)
         {
             ToggleFlashlight();
         }
-        if (Input.GetKeyDown(KeyCode.R) && batteryLife < 100f && !isOn)
+        if (isEquipped && Input.GetKeyDown(KeyCode.R) && batteryLife < 100f && !isOn)
         {
             RechargeBattery();
         }
@@ -78,5 +79,9 @@ public class Flashlight : MonoBehaviour
         {
             batteryLife = 100f;
         }
+    }
+    public void SetEquipped(bool equipped)
+    {
+        isEquipped = equipped;
     }
 }

@@ -11,6 +11,7 @@ public class InventoryManager : MonoBehaviour
 
     private GameObject heldItem; 
     private GameObject flashlight;
+    private GameObject shotgun;
 
     void Update()
     {
@@ -22,13 +23,22 @@ public class InventoryManager : MonoBehaviour
 
     public void EquipItem(GameObject item)
     {
-        if (item.CompareTag("Flashlight"))
+        switch (item.tag)
         {
-            EquipFlashlight(item);
-        }
-        else
-        {
-            EquipOtherItem(item);
+            case "Flashlight":
+                EquipFlashlight(item);
+                break;
+
+            case "Shotgun":
+                EquipShotgun(item);
+                break;
+            case "Ammo":
+                //EquipShotgun(item);
+                break;
+
+            default:
+                EquipOtherItem(item);
+                break;
         }
     }
     public void EquipFlashlight(GameObject item)
@@ -43,6 +53,22 @@ public class InventoryManager : MonoBehaviour
         flashlight.transform.localPosition = Vector3.zero;
         flashlight.transform.localRotation = Quaternion.identity;
         flashlight.SetActive(true);
+    }
+
+    public void EquipShotgun(GameObject item)
+    {
+        if (shotgun != null)
+        {
+            DropItem();
+        }
+
+        shotgun = item;
+        shotgun.transform.SetParent(rightHand);
+        shotgun.transform.localPosition = Vector3.zero;
+        shotgun.transform.localRotation = Quaternion.identity;
+        shotgun.SetActive(true);
+        Shotgun shotgunS = shotgun.GetComponent<Shotgun>();
+        shotgunS.SetEquipped(true);
     }
 
     public void EquipOtherItem(GameObject item)

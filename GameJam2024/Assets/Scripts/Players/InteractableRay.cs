@@ -25,17 +25,20 @@ public class InteractableRay : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E) && highlightedObject != null)
         {
-            if (highlightedObject.layer == LayerMask.NameToLayer("Teleports"))
+            switch (highlightedObject)
             {
-                Teleport(highlightedObject);
-            }
-            else if (highlightedObject.CompareTag("Flashlight"))
-            {
-                PickupFlashlight(highlightedObject);
-            }
-            else
-            {
-                PickupItem(highlightedObject);
+                case var obj when obj.layer == LayerMask.NameToLayer("Teleports"):
+                    Teleport(obj);
+                    break;
+
+                case var obj when obj.CompareTag("Flashlight"):
+                    GameObject flashObject = obj.transform.parent.gameObject;
+                    PickupFlashlight(flashObject);
+                    break;
+
+                default:
+                    PickupItem(highlightedObject);
+                    break;
             }
         }
     }
@@ -94,8 +97,10 @@ public class InteractableRay : MonoBehaviour
 
     private void PickupFlashlight(GameObject flashlight)
     {
-        UnityEngine.Debug.Log($"Picked up: {flashlight.name}");
+        //UnityEngine.Debug.Log($"Picked up: {flashlight.name}");
         inventoryManager.EquipFlashlight(flashlight);
+        Flashlight flashlightScript = flashlight.GetComponent<Flashlight>();
+        flashlightScript.SetEquipped(true);
         RemoveHighlight();
     }
 
