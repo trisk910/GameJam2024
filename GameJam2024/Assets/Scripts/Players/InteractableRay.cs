@@ -36,6 +36,10 @@ public class InteractableRay : MonoBehaviour
                     PickupFlashlight(flashObject);
                     break;
 
+                case var obj when obj.CompareTag("Shotgun"):                    
+                    PickupShotgun(obj);
+                    break;
+
                 default:
                     PickupItem(highlightedObject);
                     break;
@@ -95,24 +99,41 @@ public class InteractableRay : MonoBehaviour
         }
     }
 
-    private void PickupFlashlight(GameObject flashlight)
+   private void PickupFlashlight(GameObject flashlight)
+{
+    if (inventoryManager.heldItem != null)
     {
-        //UnityEngine.Debug.Log($"Picked up: {flashlight.name}");
-        inventoryManager.EquipFlashlight(flashlight);
-        Flashlight flashlightScript = flashlight.GetComponent<Flashlight>();
-        flashlightScript.SetEquipped(true);
-        RemoveHighlight();
+        inventoryManager.DropItem();
     }
+    inventoryManager.EquipFlashlight(flashlight);
+    Flashlight flashlightScript = flashlight.GetComponent<Flashlight>();
+    flashlightScript.SetEquipped(true);
+    RemoveHighlight();
+}
 
-    private void PickupItem(GameObject item)
+private void PickupShotgun(GameObject shotgun)
+{
+    if (inventoryManager.heldItem != null)
     {
-        if (highlightedObject.layer == LayerMask.NameToLayer("Teleports"))
-            return;
+        inventoryManager.DropItem(); 
+    }
+    inventoryManager.EquipShotgun(shotgun);
+    RemoveHighlight();
+}
 
-        UnityEngine.Debug.Log($"Picked up: {item.name}");
+private void PickupItem(GameObject item)
+{
+    if (highlightedObject.layer != LayerMask.NameToLayer("Teleports"))
+    {
+        if (inventoryManager.heldItem != null)
+        {
+            inventoryManager.DropItem();
+        }
         inventoryManager.EquipOtherItem(item);
         RemoveHighlight();
-    }
+    }       
+}
+
 
     private void Teleport(GameObject teleportCube)
     {

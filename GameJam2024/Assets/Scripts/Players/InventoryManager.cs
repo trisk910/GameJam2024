@@ -9,7 +9,7 @@ public class InventoryManager : MonoBehaviour
     public Transform dropPoint;
     public float dropOffset = 0.2f;
 
-    private GameObject heldItem; 
+    public GameObject heldItem; 
     private GameObject flashlight;
     private GameObject shotgun;
 
@@ -22,7 +22,12 @@ public class InventoryManager : MonoBehaviour
     }
 
     public void EquipItem(GameObject item)
-    {
+    {        
+        if (heldItem != null)
+        {
+            DropItem(); 
+        }
+
         switch (item.tag)
         {
             case "Flashlight":
@@ -32,8 +37,9 @@ public class InventoryManager : MonoBehaviour
             case "Shotgun":
                 EquipShotgun(item);
                 break;
+
             case "Ammo":
-                //EquipShotgun(item);
+                // Equip ammo logic, if needed
                 break;
 
             default:
@@ -41,6 +47,7 @@ public class InventoryManager : MonoBehaviour
                 break;
         }
     }
+
     public void EquipFlashlight(GameObject item)
     {
         if (flashlight != null)
@@ -89,6 +96,12 @@ public class InventoryManager : MonoBehaviour
     {
         if (heldItem != null)
         {
+            if (heldItem.CompareTag("Shotgun"))
+            {
+                Shotgun shotgunS = heldItem.GetComponent<Shotgun>();
+                shotgunS.SetEquipped(false);
+            }
+
             heldItem.transform.SetParent(null);
 
             RaycastHit hit;
@@ -100,8 +113,33 @@ public class InventoryManager : MonoBehaviour
             {
                 heldItem.transform.position = dropPoint.position + Vector3.down * dropOffset;
             }
+
             heldItem.SetActive(true);
-            heldItem = null;
+            heldItem = null; 
+        }
+
+        if (shotgun != null)
+        {
+            // Ensure shotgun is also dropped properly
+            shotgun.transform.SetParent(null);
+            RaycastHit hit;
+            if (Physics.Raycast(dropPoint.position, Vector3.down, out hit))
+            {
+                shotgun.transform.position = hit.point + Vector3.up * dropOffset;
+            }
+            else
+            {
+                shotgun.transform.position = dropPoint.position + Vector3.down * dropOffset;
+            }
+
+            shotgun.SetActive(true);
+            shotgun = null; 
         }
     }
+
+    public GameObject HeldItem()
+    {
+        return heldItem;
+    }
+
 }
