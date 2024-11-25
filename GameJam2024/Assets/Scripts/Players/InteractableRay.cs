@@ -1,23 +1,17 @@
-using System.Diagnostics;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class InteractableRay : MonoBehaviour
 {
     public float rayDistance = 5f;
     public LayerMask itemLayer;
     public LayerMask teleportLayer;
+    public LayerMask minigameLayer;
     public Material highlightMaterial;
     public Material teleportHighlightMaterial;
-    public InventoryManager inventoryManager;
+    public Material minigameHighlightMaterial;
+
     private GameObject highlightedObject;
     private Material originalMaterial;
-    private Transform playerTransform;
-
-    void Start()
-    {
-        playerTransform = Camera.main.transform;
-    }
 
     void Update()
     {
@@ -31,13 +25,8 @@ public class InteractableRay : MonoBehaviour
                     Teleport(obj);
                     break;
 
-                case var obj when obj.CompareTag("Flashlight"):
-                    GameObject flashObject = obj.transform.parent.gameObject;
-                    PickupFlashlight(flashObject);
-                    break;
-
-                case var obj when obj.CompareTag("Shotgun"):                    
-                    PickupShotgun(obj);
+                case var obj when obj.layer == LayerMask.NameToLayer("Minigames"):
+                    PickupMinigameButton(obj);
                     break;
 
                 default:
@@ -54,21 +43,15 @@ public class InteractableRay : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, rayDistance, teleportLayer))
         {
-            if (hit.collider != null && highlightedObject != hit.collider.gameObject)
-            {
-                RemoveHighlight();
-                highlightedObject = hit.collider.gameObject;
-                AddHighlight(highlightedObject, true);
-            }
+            HighlightObject(hit.collider.gameObject, teleportHighlightMaterial);
         }
         else if (Physics.Raycast(ray, out hit, rayDistance, itemLayer))
         {
-            if (hit.collider != null && highlightedObject != hit.collider.gameObject)
-            {
-                RemoveHighlight();
-                highlightedObject = hit.collider.gameObject;
-                AddHighlight(highlightedObject, false); 
-            }
+            HighlightObject(hit.collider.gameObject, highlightMaterial);
+        }
+        else if (Physics.Raycast(ray, out hit, rayDistance, minigameLayer))
+        {
+            HighlightObject(hit.collider.gameObject, minigameHighlightMaterial);
         }
         else
         {
@@ -76,19 +59,24 @@ public class InteractableRay : MonoBehaviour
         }
     }
 
-    private void AddHighlight(GameObject obj, bool isTeleport)
+    private void HighlightObject(GameObject obj, Material highlightMat)
     {
-        Renderer renderer = obj.GetComponent<Renderer>();
-        if (renderer != null)
+        if (highlightedObject != obj)
         {
-            originalMaterial = renderer.material;
-            renderer.material = isTeleport ? teleportHighlightMaterial : highlightMaterial;
+            RemoveHighlight();
+            highlightedObject = obj;
+            Renderer renderer = obj.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                originalMaterial = renderer.material;
+                renderer.material = highlightMat;
+            }
         }
     }
 
     private void RemoveHighlight()
     {
-        if (highlightedObject != null && originalMaterial != null)
+        if (highlightedObject != null)
         {
             Renderer renderer = highlightedObject.GetComponent<Renderer>();
             if (renderer != null)
@@ -99,53 +87,33 @@ public class InteractableRay : MonoBehaviour
         }
     }
 
-   private void PickupFlashlight(GameObject flashlight)
-{
-    if (inventoryManager.heldItem != null)
+    private void PickupMinigameButton(GameObject button)
     {
-        inventoryManager.DropItem();
-    }
-    inventoryManager.EquipFlashlight(flashlight);
-    Flashlight flashlightScript = flashlight.GetComponent<Flashlight>();
-    flashlightScript.SetEquipped(true);
-    RemoveHighlight();
-}
-
-private void PickupShotgun(GameObject shotgun)
-{
-    if (inventoryManager.heldItem != null)
-    {
-        inventoryManager.DropItem(); 
-    }
-    inventoryManager.EquipShotgun(shotgun);
-    RemoveHighlight();
-}
-
-private void PickupItem(GameObject item)
-{
-    if (highlightedObject.layer != LayerMask.NameToLayer("Teleports"))
-    {
-        if (inventoryManager.heldItem != null)
+        MinigameManager minigameManager = FindObjectOfType<MinigameManager>();
+        if (minigameManager == null)
         {
-            inventoryManager.DropItem();
+            UnityEngine.Debug.Log("MinigameManager no trobat a l'escena!");
+            return;
         }
-        inventoryManager.EquipOtherItem(item);
-        RemoveHighlight();
-    }       
-}
 
+        int buttonIndex = minigameManager.buttons.IndexOf(button);
+        if (buttonIndex != -1)
+        {
+            minigameManager.ButtonPressed(buttonIndex);
+        }
+        else
+        {
+            UnityEngine.Debug.Log("El botó no està assignat al MinigameManager!");
+        }
+    }
+
+    private void PickupItem(GameObject item)
+    {
+        UnityEngine.Debug.Log("Pickup item: " + item.name);
+    }
 
     private void Teleport(GameObject teleportCube)
     {
-        if (teleportCube.CompareTag("TeleportA"))
-        {
-            this.transform.position = GameObject.FindWithTag("TeleportB").transform.position;
-        }
-        else if (teleportCube.CompareTag("TeleportB"))
-        {
-            this.transform.position = GameObject.FindWithTag("TeleportA").transform.position;
-        }
-
-        RemoveHighlight();
+        UnityEngine.Debug.Log("Teleport to: " + teleportCube.name);
     }
 }

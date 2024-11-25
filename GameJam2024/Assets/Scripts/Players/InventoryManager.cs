@@ -19,6 +19,8 @@ public class InventoryManager : MonoBehaviour
         {
             DropItem();
         }
+
+        Debug.Log(heldItem);
     }
 
     public void EquipItem(GameObject item)
@@ -76,6 +78,7 @@ public class InventoryManager : MonoBehaviour
         shotgun.SetActive(true);
         Shotgun shotgunS = shotgun.GetComponent<Shotgun>();
         shotgunS.SetEquipped(true);
+        Debug.Log("Shotgun Equipped");
     }
 
     public void EquipOtherItem(GameObject item)
@@ -96,10 +99,12 @@ public class InventoryManager : MonoBehaviour
     {
         if (heldItem != null)
         {
+            Debug.Log("Dropped");
             if (heldItem.CompareTag("Shotgun"))
             {
                 Shotgun shotgunS = heldItem.GetComponent<Shotgun>();
                 shotgunS.SetEquipped(false);
+                Debug.Log("Shotgun Dropped");
             }
 
             heldItem.transform.SetParent(null);

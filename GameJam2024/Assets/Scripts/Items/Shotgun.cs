@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class Shotgun : MonoBehaviour
@@ -7,19 +8,26 @@ public class Shotgun : MonoBehaviour
     public ParticleSystem shotgunParticles;
     public float damage = 10f;
     public float range = 20f;
-    public float reloadTime = 2f;
-    private int maxAmmo = 2;
-    public int currentAmmo;
-    public int maxShells = 10;
-    public int currentShells;
+    public float chargeTime = 1.5f;
+    public float rechargeTime = 2f;
+    public int maxEnergy = 10;
+    public int currentEnergy;
 
+    public int rays = 6;
+    public float spreadAngle = 5f;
+
+    private float charge;
+    private bool isCharging = false;
     private bool isEquipped = false;
-    private bool isReloading = false;
+    private bool isRecharging = false;
+
+    [Header("Shotgun UI")]
+    public Slider chargeSlider;
 
     [Header("Shotgun Effects")]
     public ParticleSystem damageableHitParticle;
     public ParticleSystem surfaceHitParticle;
-    public Transform shootPoint; 
+    public Transform shootPoint;
 
     private void Start()
     {
@@ -28,63 +36,94 @@ public class Shotgun : MonoBehaviour
             shotgunParticles = GetComponent<ParticleSystem>();
         }
 
-        currentAmmo = maxAmmo;
-        currentShells = maxShells;
+        currentEnergy = maxEnergy;
+
+        if (chargeSlider != null)
+        {
+            chargeSlider.value = 0;
+            chargeSlider.maxValue = chargeTime;
+        }
     }
 
     private void Update()
     {
-        if (!isReloading)
+        if (isEquipped && !isRecharging)
         {
-            if (Input.GetMouseButtonDown(0) && isEquipped  && currentAmmo > 0)
+            if (Input.GetMouseButtonDown(0) && !isCharging && currentEnergy > 0)
             {
-                Shoot();
-            }
-            if (currentAmmo <= 0 && currentShells > 0)
-            {
-                StartCoroutine(Reload());
+                isCharging = true;
+                StartCoroutine(ChargeAndShoot());
             }
         }
-        Debug.Log("Shotgun Equipped: " + isEquipped);
+        if (currentEnergy <= 0 && !isRecharging)
+        {
+            StartCoroutine(Recharge());
+        }
     }
 
-    public void Shoot()
+    private IEnumerator ChargeAndShoot()
     {
-        if (currentAmmo > 0)
+        charge = 0;
+        while (charge < chargeTime)
+        {
+            charge += Time.deltaTime;
+            if (chargeSlider != null)
+            {
+                chargeSlider.value = charge;
+            }
+            yield return null;
+        }
+        Shoot();
+        if (chargeSlider != null)
+        {
+            chargeSlider.value = 0;
+        }
+        isCharging = false;
+    }
+
+    private void Shoot()
+    {
+        if (shotgunParticles != null)
         {
             shotgunParticles.Play();
+        }
+
+        for (int i = 0; i < rays; i++)
+        {
+            Vector3 randomDirection = shootPoint.forward;
+            randomDirection.x += Random.Range(-spreadAngle, spreadAngle) * 0.01f;
+            randomDirection.y += Random.Range(-spreadAngle, spreadAngle) * 0.01f;
+            randomDirection.z += Random.Range(-spreadAngle, spreadAngle) * 0.01f;
+            randomDirection.Normalize();
 
             RaycastHit hit;
-            if (Physics.Raycast(shootPoint.position, shootPoint.forward, out hit, range))
-            {                
+            if (Physics.Raycast(shootPoint.position, randomDirection, out hit, range))
+            {
                 AlignParticlesWithRay(hit.point);
-
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
 
                 if (damageable != null)
                 {
                     damageable.TakeDamage(damage);
-
                     if (damageableHitParticle != null)
                     {
                         Instantiate(damageableHitParticle, hit.point, Quaternion.LookRotation(hit.normal));
                     }
-                    //UnityEngine.Debug.Log("Hit Target");
                 }
                 else
                 {
-                    
                     if (surfaceHitParticle != null)
                     {
                         Instantiate(surfaceHitParticle, hit.point, Quaternion.LookRotation(hit.normal));
                     }
-                    //UnityEngine.Debug.Log("Hit nothing");
                 }
             }
-
-            currentAmmo--;
         }
+
+        currentEnergy--;
     }
+
+
     private void AlignParticlesWithRay(Vector3 hitPoint)
     {
         Vector3 direction = (hitPoint - shootPoint.position).normalized;
@@ -92,41 +131,26 @@ public class Shotgun : MonoBehaviour
         shotgunParticles.transform.rotation = Quaternion.LookRotation(direction);
     }
 
-
-
-    private IEnumerator Reload()
+    private IEnumerator Recharge()
     {
-        if (currentAmmo < maxAmmo && currentShells > 0)
-        {
-            isReloading = true;
-            yield return new WaitForSeconds(reloadTime);
-
-            // Calculate how many shells to reload
-            int shellsNeeded = maxAmmo - currentAmmo;
-            int shellsToReload = Mathf.Min(shellsNeeded, currentShells);
-
-            currentAmmo += shellsToReload;
-            currentShells -= shellsToReload;
-
-            isReloading = false;
-        }
+        isRecharging = true;
+        yield return new WaitForSeconds(rechargeTime);
+        currentEnergy = maxEnergy;
+        //Ficar animacio de recarga
+        isRecharging = false;
     }
 
     public void SetEquipped(bool equipped)
     {
         isEquipped = equipped;
     }
-    public bool CheckShotgunE()
-    {
-        return isEquipped;
-    }
 
-    public void AddAmmo(int shells)
+    public void AddEnergy(int energy)
     {
-        currentShells += shells;
-        if (currentShells > maxShells)
+        currentEnergy += energy;
+        if (currentEnergy > maxEnergy)
         {
-            currentShells = maxShells;
+            currentEnergy = maxEnergy;
         }
     }
 }
